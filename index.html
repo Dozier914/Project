@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Load the Paper.js library -->
+<script type="text/javascript" src="node_modules\paper\dist\paper-full.js"></script>
+<!-- Define inlined PaperScript associate it with myCanvas -->
+<script type="text/paperscript" canvas="myCanvas">
+	
+	var myPath;
+	
+	var canvasData;
+	var canvasDataArr = []; //array of canvasData (path) objects
+	var pathNum = 0; //path number 
+	
+	var stringRepresentation; //represents JSON string
+	
+	var StartTime;
+	var EndTime;
+	var totalTime;
+	
+	var prevPointTime = 0;
+	
+	tool.minDistance = 10;
+	tool.maxDistance = 30;
+
+	
+	function onMouseDown(event) {
+		StartTime = event.timeStamp;
+		
+		myPath = new Path(); //initialize new path
+		myPath.fillColor = "black";
+		myPath.add(event.point);
+		
+		canvasData = new Object(); //initialize canvasData object for path
+		
+		pathNum = pathNum + 1; //add 1 to pathNum
+		
+		/* Adds path number and starting point to object */
+		canvasData.Path = 'Path ' + pathNum;
+		canvasData.StartingPoint = event.point; 
+	}
+	function onMouseDrag(event) {
+	
+		var step;
+		var top;
+		var bottom;
+
+		if(Math.abs(prevPointTime - event.timeStamp) > 50) {
+			step = (event.delta/2);
+			step.angle += 40;
+		}
+		else {
+			step = (event.delta/2);
+			step.angle += 10;
+		}
+		
+		//console.log(event.timeStamp, prevPointTime);
+		prevPointTime = event.timeStamp;
+		
+		//console.log(event.timeStamp, prevPointTime);
+		
+		top = event.middlePoint + step;
+		bottom = event.middlePoint - step;
+		
+		myPath.add(top);
+		myPath.insert(0, bottom);
+		myPath.smooth();
+		
+	}
+	function onMouseUp(event) {
+		EndTime = event.timeStamp;
+		TotalTime = (EndTime - StartTime)/1000;
+		
+		//console.log("StartTime: ", StartTime/1000, "EndTime: ", EndTime/1000, "TotalTime (in seconds): ", TotalTime);
+		
+		/* Adds path length and end point to object */
+		canvasData.EndPoint = event.point;
+		canvasData.length = myPath.length;
+		canvasData.TotalTime = TotalTime;
+		
+		canvasDataArr.push(canvasData); //add path object to array
+		
+		stringRepresentation = window.JSON.stringify(canvasDataArr); //converts to JSON
+		
+		console.log(canvasDataArr);
+		console.log(stringRepresentation);
+		
+		/* Insert code to store in database */
+		//var myObject = window.JSON.parse(stringRepresentation); //retrieve object
+		
+		myPath.add(event.point);
+		myPath.closed = true;
+		myPath.smooth();
+	}	
+	
+</script>
+
+<style>
+	body {
+	  margin: 0;
+	}
+		#myCanvas {
+	  width: 100vw;
+	  height: 100vh;
+	}
+</style>
+
+</head>
+<body>
+	<canvas id="myCanvas"></canvas>
+</body>
+</html>
